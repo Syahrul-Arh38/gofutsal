@@ -30,7 +30,7 @@ export default function AdminLogin() {
       if (result.success) {
         // Simpan status login di browser
         localStorage.setItem('isAdmin', 'true');
-        router.push('/admin/dashboard'); // Arahkan ke dashboard
+        router.push('/admin/dashboard');
       } else {
         setError('Username atau Password salah!');
       }
@@ -58,7 +58,7 @@ export default function AdminLogin() {
             <input
               type="text"
               required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              className="mt-1 block w-full text-gray-700  px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
@@ -69,7 +69,7 @@ export default function AdminLogin() {
             <input
               type="password"
               required
-              className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+              className="mt-1 block w-full text-gray-700  px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

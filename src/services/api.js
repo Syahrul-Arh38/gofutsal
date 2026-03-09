@@ -56,10 +56,11 @@ export const postBooking = async (formData) => {
         ...formData 
       }),
       redirect: 'follow',
+      mode: 'no-cors',
     });
-    return await res.json();
+    return { success: true, message: "Booking berhasil dikirim!" };
   } catch (error) {
-    console.error("API Error (Post Booking):", error);
-    return { success: false, message: error.message };
+    console.error("API Error:", error);
+    return { success: false, message: "Terjadi kesalahan koneksi." };
   }
 };

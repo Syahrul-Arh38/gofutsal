@@ -2,204 +2,279 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// 1. Tambahkan fungsi helper ini di paling atas (di luar komponen)
 const formatWA = (num) => {
   if (!num) return "";
-  let stringNum = num.toString();
-  // Mengubah 0812... menjadi 62812...
-  if (stringNum.startsWith('0')) {
-    return '62' + stringNum.slice(1);
-  }
-  return stringNum;
+  let cleanNum = num.toString().replace(/\D/g, '');
+  if (cleanNum.startsWith('0')) return '62' + cleanNum.slice(1);
+  return cleanNum.startsWith('62') ? cleanNum : '62' + cleanNum;
 };
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('booking'); // 'booking' atau 'jadwal'
   const [bookings, setBookings] = useState([]);
+  const [jadwalList, setJadwalList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [newJadwal, setNewJadwal] = useState({ lapangan: 'Lapangan A', jam_mulai: '', jam_selesai: '', harga: '' });
+  
   const router = useRouter();
+  const URL_API = process.env.NEXT_PUBLIC_GAS_API_URL;
 
   useEffect(() => {
     const adminStatus = localStorage.getItem('isAdmin');
     if (adminStatus !== 'true') {
       router.push('/admin');
     } else {
-      fetchBookingData();
+      fetchAllData();
     }
   }, [router]);
 
-  const fetchBookingData = async () => {
+  const fetchAllData = async () => {
     setLoading(true);
-    const URL_API = process.env.NEXT_PUBLIC_GAS_API_URL;
-
     try {
-      console.log("📡 Memanggil API...");
-      const res = await fetch(`${URL_API}?action=getBooking`, {
-        method: 'GET',
-        cache: 'no-store',
-        redirect: 'follow',
-      });
+      // Ambil Booking
+      const resB = await fetch(`${URL_API}?action=getBooking`, { cache: 'no-store' });
+      const dataB = await resB.json();
+      setBookings(Array.isArray(dataB) ? dataB.reverse() : []);
 
-      const rawData = await res.json();
-      console.log("📦 Data Mentah dari GAS:", rawData);
-
-      let finalData = [];
-      if (Array.isArray(rawData)) {
-        finalData = rawData;
-      } else if (rawData.data && Array.isArray(rawData.data)) {
-        finalData = rawData.data;
-      }
-
-      // Filter untuk memastikan hanya baris berisi data yang masuk
-      const cleanData = finalData.filter(item => 
-        item.nama || item.Nama || item.id || item.ID
-      );
-      
-      setBookings(cleanData.reverse());
-      
+      // Ambil Jadwal
+      const resJ = await fetch(`${URL_API}?action=getJadwal`, { cache: 'no-store' });
+      const dataJ = await resJ.json();
+      setJadwalList(Array.isArray(dataJ) ? dataJ : []);
     } catch (err) {
-      console.error("❌ Error Fetching:", err.message);
+      console.error("Gagal sinkronisasi data.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleUpdateStatus = async (id) => {
-    if (!confirm("Konfirmasi pembayaran lunas untuk booking ini?")) return;
-  
+    if (!confirm("Konfirmasi pembayaran lunas?")) return;
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_GAS_API_URL, {
+      const res = await fetch(URL_API, {
         method: 'POST',
-        body: JSON.stringify({
-          action: 'updateStatus',
-          id: id,
-          status: 'Lunas'
-        }),
+        body: JSON.stringify({ action: 'updateStatus', id, status: 'Lunas' }),
+      });
+      const result = await res.json();
+      if (result.success) fetchAllData();
+    } catch (err) { alert("Gagal update status."); }
+  };
+
+  const handleAddJadwal = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(URL_API, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'addJadwal', payload: newJadwal }),
       });
       const result = await res.json();
       if (result.success) {
-        alert("Pembayaran Berhasil Dikonfirmasi!");
-        fetchBookingData(); // Refresh tabel otomatis
+        setShowModal(false);
+        fetchAllData();
       }
-    } catch (err) {
-      alert("Gagal update status: " + err.message);
-    }
+    } catch (err) { alert("Gagal menambah jadwal."); }
+  };
+
+  const handleDeleteJadwal = async (id) => {
+    if (!confirm("Hapus jadwal ini?")) return;
+    try {
+      const res = await fetch(URL_API, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'deleteJadwal', id }),
+      });
+      const result = await res.json();
+      if (result.success) fetchAllData();
+    } catch (err) { alert("Gagal menghapus."); }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isAdmin');
-    router.push('/admin');
+    if (confirm("Apakah Anda yakin ingin keluar?")) {
+      // 1. Hapus LocalStorage
+      localStorage.removeItem('isAdmin'); 
+      
+      // 2. Hapus Cookie (dengan menyetel max-age ke 0)
+      document.cookie = "isAdmin=; path=/; max-age=0; SameSite=Lax";
+      
+      // 3. Tendang ke halaman login
+      router.replace('/admin'); 
+    }
   };
+
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex font-sans">
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <aside className="w-64 bg-green-900 text-white p-6 hidden md:block shadow-xl">
-        <h1 className="text-2xl font-bold mb-10 border-b border-green-800 pb-4">Admin GoFutsal</h1>
+        <h1 className="text-2xl font-bold mb-10 border-b border-green-800 pb-4 text-center">Admin GoFutsal</h1>
         <nav className="space-y-2">
-          <div className="bg-green-700 p-3 rounded-lg font-semibold shadow-inner">Daftar Booking</div>
-          <div className="p-3 hover:bg-green-800 rounded-lg cursor-pointer transition">Kelola Jadwal</div>
-          <button onClick={handleLogout} className="w-full text-left p-3 hover:bg-red-600 rounded-lg mt-20 transition font-medium">
-            Logout
+          <button 
+            onClick={() => setActiveTab('booking')}
+            className={`w-full text-left p-3 rounded-lg transition ${activeTab === 'booking' ? 'bg-green-700 font-bold shadow-inner' : 'hover:bg-green-800'}`}
+          >
+            📋 Daftar Booking
+          </button>
+          <button 
+            onClick={() => setActiveTab('jadwal')}
+            className={`w-full text-left p-3 rounded-lg transition ${activeTab === 'jadwal' ? 'bg-green-700 font-bold shadow-inner' : 'hover:bg-green-800'}`}
+          >
+            ⚙️ Kelola Jadwal
+          </button>
+          <button onClick={handleLogout} className="w-full text-left p-3 hover:bg-red-600 rounded-lg mt-20 transition font-medium text-red-200">
+            🚪 Logout
           </button>
         </nav>
       </aside>
 
-      {/* Main Content */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 p-4 md:p-10 overflow-x-hidden">
         <div className="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Daftar Pesanan Masuk</h2>
-            <p className="text-gray-500 text-sm">Total: {bookings.length} Pesanan</p>
+            <h2 className="text-2xl font-bold text-gray-800">
+              {activeTab === 'booking' ? "Daftar Pesanan Masuk" : "Pengaturan Jadwal Lapangan"}
+            </h2>
+            <p className="text-gray-500 text-sm">Dashboard Management System</p>
           </div>
-          <button 
-            onClick={fetchBookingData} 
-            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-green-100"
-          >
-            <span>🔄</span> Refresh Data
-          </button>
+          <div className="flex gap-2">
+            {activeTab === 'jadwal' && (
+              <button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-lg shadow-blue-100">
+                + Tambah Jadwal
+              </button>
+            )}
+            <button onClick={fetchAllData} className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold transition flex items-center gap-2 active:scale-95 shadow-lg shadow-green-100">
+              <span>🔄</span> Refresh
+            </button>
+          </div>
         </div>
 
-        {/* Tabel */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="p-4 font-semibold text-gray-600 uppercase text-xs tracking-wider">ID / Nama</th>
-                  <th className="p-4 font-semibold text-gray-600 uppercase text-xs tracking-wider">Kontak WA</th>
-                  <th className="p-4 font-semibold text-gray-600 uppercase text-xs tracking-wider">Lapangan & Jam</th>
-                  <th className="p-4 font-semibold text-gray-600 uppercase text-xs tracking-wider text-center">Status</th>
-                  <th className="p-4 font-semibold text-gray-600 uppercase text-xs tracking-wider text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {loading ? (
+            {activeTab === 'booking' ? (
+              /* TABEL BOOKING */
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <td colSpan="5" className="p-20 text-center">
-                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-green-500 border-t-transparent"></div>
-                      <p className="mt-2 text-gray-500">Memuat data...</p>
-                    </td>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500">ID / Nama</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500">Kontak WA</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500">Jadwal</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500 text-center">Status</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500 text-center">Aksi</th>
                   </tr>
-                ) : bookings.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className="p-20 text-center text-gray-400 italic">Belum ada booking masuk.</td>
-                  </tr>
-                ) : (
-                  bookings.map((row, index) => (
-                    <tr key={index} className="hover:bg-gray-50/80 transition-colors group">
-                      <td className="p-4">
-                        <div className="font-bold text-gray-800">{row.nama || row.Nama || 'No Name'}</div>
-                        <div className="text-xs text-gray-400 font-mono">{row.id || row.ID || '-'}</div>
-                      </td>
-                      
-                      <td className="p-4 text-sm">
-                        <a 
-                          href={`https://wa.me/${formatWA(row.no_hp || row.No_HP)}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2 group-hover:underline"
-                        >
-                          📱 {row.no_hp || row.No_HP || '-'}
-                        </a>
-                      </td>
-
-                      <td className="p-4 text-sm">
-                        <div className="font-semibold text-gray-700">{row.lapangan || row.Lapangan || '-'}</div>
-                        <div className="text-gray-500 text-xs italic">
-                          {row.tanggal || row.Tanggal} | {row.jam || row.Jam}
-                        </div>
-                      </td>
-
-                      <td className="p-4 text-center text-xs">
-                        <span className={`px-3 py-1.5 rounded-full font-bold shadow-sm ${
-                          (row.status_pembayaran === 'Lunas' || row.Status === 'Lunas') 
-                            ? 'bg-green-100 text-green-700 border border-green-200' 
-                            : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                        }`}>
-                          {row.status_pembayaran || row.Status || 'Pending'}
-                        </span>
-                      </td>
-                      
-                      <td className="p-4 text-center">
-                        {row.status_pembayaran !== 'Lunas' && row.Status !== 'Lunas' ? (
-                            <button 
-                            onClick={() => handleUpdateStatus(row.id || row.ID)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
-                            >
-                            Konfirmasi Lunas
-                            </button>
-                        ) : (
-                            <span className="text-green-600 font-bold text-xs">✅ Selesai</span>
-                        )}
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {loading ? (
+                    <tr><td colSpan="5" className="p-20 text-center animate-pulse">Menyinkronkan data...</td></tr>
+                  ) : bookings.map((row, index) => {
+                    const isLunas = Object.values(row).some(v => v?.toString().toLowerCase().trim() === 'lunas');
+                    return (
+                      <tr key={index} className="hover:bg-gray-50 transition">
+                        <td className="p-4">
+                          <div className="font-bold text-gray-700">{row.nama || row.Nama}</div>
+                          <div className="text-[10px] text-gray-400 font-mono">{row.id || row.ID}</div>
                         </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                        <td className="p-4 text-sm">
+                          <a href={`https://wa.me/${formatWA(row.no_hp || row.No_HP)}`} target="_blank" className="text-blue-600 font-bold hover:underline">
+                            📱 {row.no_hp || row.No_HP}
+                          </a>
+                        </td>
+                        <td className="p-4 text-sm">
+                          <div className="font-semibold text-gray-700">{row.lapangan || row.Lapangan}</div>
+                          <div className="text-gray-500 text-[11px]">{row.tanggal || row.Tanggal} | {row.jam || row.Jam}</div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black border ${isLunas ? 'bg-green-100 text-green-700 border-green-200' : 'bg-yellow-100 text-yellow-700 border-yellow-200'}`}>
+                            {isLunas ? "LUNAS" : "PENDING"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          {isLunas ? <span className="text-green-600 font-bold text-xs italic">Selesai</span> : (
+                            <button onClick={() => handleUpdateStatus(row.id || row.ID)} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold">Konfirmasi</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              /* TABEL KELOLA JADWAL */
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500">Lapangan</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500">Jam Operasional</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500">Harga</th>
+                    <th className="p-4 text-xs uppercase font-bold text-gray-500 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                    {jadwalList.map((item, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="p-4 font-bold text-gray-800">{item.lapangan}</td>
+                        <td className="p-4 text-sm">
+                          {/* Pastikan memanggil properti yang sesuai dengan header spreadsheet */}
+                          {item.jam_mulai} - {item.jam_selesai}
+                        </td>
+                        <td className="p-4 text-sm font-mono text-green-700 font-bold">
+                          {/* Gunakan pengecekan isNaN agar tidak muncul Rp NaN */}
+                          Rp {item.harga && !isNaN(item.harga) ? Number(item.harga).toLocaleString('id-ID') : '0'}
+                        </td>
+                        <td className="p-4 text-center">
+                          <button 
+                            onClick={() => handleDeleteJadwal(item.id)} 
+                            className="text-red-500 hover:bg-red-50 px-4 py-2 rounded-xl text-xs font-bold border border-red-100 transition"
+                          >
+                            Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+              </table>
+            )}
           </div>
         </div>
       </main>
+
+      {/* MODAL TAMBAH JADWAL */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <form onSubmit={handleAddJadwal} className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl scale-in-center">
+            <h3 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Tambah Jadwal Baru</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase">Pilih Lapangan</label>
+                <select className="w-full text-gray-700 border p-3 rounded-xl mt-1 outline-none focus:ring-2 focus:ring-green-500" 
+                  value={newJadwal.lapangan} onChange={(e) => setNewJadwal({...newJadwal, lapangan: e.target.value})}>
+                  <option>Lapangan A</option>
+                  <option>Lapangan B</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase">Jam Mulai</label>
+                  <input type="time" placeholder="08:00" className="w-full border  p-3 rounded-xl mt-1 text-gray-700" required 
+                    onChange={(e) => setNewJadwal({...newJadwal, jam_mulai: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase">Jam Selesai</label>
+                  <input type="time" placeholder="09:00" className="w-full border p-3 rounded-xl mt-1 text-gray-700" required 
+                    onChange={(e) => setNewJadwal({...newJadwal, jam_selesai: e.target.value})} />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase">Harga Sewa (Rp)</label>
+                <input type="number" placeholder="100000" className="w-full border p-3 rounded-xl mt-1 font-mono text-gray-700" required 
+                  onChange={(e) => setNewJadwal({...newJadwal, harga: e.target.value})} />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-8">
+              <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2 text-gray-400 font-bold">Batal</button>
+              <button type="submit" className="bg-green-600 text-white px-8 py-2 rounded-xl font-bold shadow-lg shadow-green-100 active:scale-95 transition">Simpan Jadwal</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
