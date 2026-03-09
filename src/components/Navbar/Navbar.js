@@ -10,8 +10,7 @@ const Navbar = () => {
     { name: 'Home', href: '#' },
     { name: 'About', href: '#about' },
     { name: 'Jadwal Lapangan', href: '#jadwal' },
-    { name: 'Paket Bundle', href: '#paket' },
-    { name: 'Kontak', href: '#kontak' },
+    { name: 'Kontak', href: '#contact' },
   ];
 
   return (

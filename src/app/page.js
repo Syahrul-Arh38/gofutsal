@@ -1,14 +1,18 @@
 import Image from "next/image";
-import { Hero, Navbar, Jadwal} from "@/components";
+import { Hero, Navbar, Jadwal, Gallery, About, Contact, Footer } from "@/components";
 
 export default function Home() {
   return (
+    <>
+    <Navbar />
+    <Hero />
     <main className="min-h-screen bg-white">
-      <Navbar />
-      <Hero />
-      {/* Section Jadwal akan dipanggil di sini */}
+      <About />
       <Jadwal />
-      {/* Nanti kita tambahkan About, Paket, dan Kontak */}
+      <Gallery />
+      <Contact />
     </main>
+    <Footer />
+    </>
   );
 }

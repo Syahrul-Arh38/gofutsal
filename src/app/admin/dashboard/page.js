@@ -89,14 +89,13 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     if (confirm("Apakah Anda yakin ingin keluar?")) {
-      // 1. Hapus LocalStorage
+      // Hapus LocalStorage
       localStorage.removeItem('isAdmin'); 
       
-      // 2. Hapus Cookie (dengan menyetel max-age ke 0)
+      // Hapus Cookie dengan menyetel expired/max-age ke 0
       document.cookie = "isAdmin=; path=/; max-age=0; SameSite=Lax";
       
-      // 3. Tendang ke halaman login
-      router.replace('/admin'); 
+      window.location.href = '/admin'; 
     }
   };
 
@@ -112,16 +111,16 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('booking')}
             className={`w-full text-left p-3 rounded-lg transition ${activeTab === 'booking' ? 'bg-green-700 font-bold shadow-inner' : 'hover:bg-green-800'}`}
           >
-            📋 Daftar Booking
+            Daftar Booking
           </button>
           <button 
             onClick={() => setActiveTab('jadwal')}
             className={`w-full text-left p-3 rounded-lg transition ${activeTab === 'jadwal' ? 'bg-green-700 font-bold shadow-inner' : 'hover:bg-green-800'}`}
           >
-            ⚙️ Kelola Jadwal
+            Kelola Jadwal
           </button>
           <button onClick={handleLogout} className="w-full text-left p-3 hover:bg-red-600 rounded-lg mt-20 transition font-medium text-red-200">
-            🚪 Logout
+            Logout
           </button>
         </nav>
       </aside>
@@ -174,7 +173,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="p-4 text-sm">
                           <a href={`https://wa.me/${formatWA(row.no_hp || row.No_HP)}`} target="_blank" className="text-blue-600 font-bold hover:underline">
-                            📱 {row.no_hp || row.No_HP}
+                            {row.no_hp || row.No_HP}
                           </a>
                         </td>
                         <td className="p-4 text-sm">

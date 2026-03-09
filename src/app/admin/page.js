@@ -28,8 +28,13 @@ export default function AdminLogin() {
       const result = await res.json();
 
       if (result.success) {
-        // Simpan status login di browser
+        // 1. Simpan di localStorage (untuk proteksi sisi client/UI)
         localStorage.setItem('isAdmin', 'true');
+
+        // 2. TAMBAHKAN INI: Simpan di Cookie (agar Middleware server bisa baca)
+        // Cookie ini akan berlaku selama 24 jam (86400 detik)
+        document.cookie = "isAdmin=true; path=/; max-age=86400; SameSite=Lax";
+
         router.push('/admin/dashboard');
       } else {
         setError('Username atau Password salah!');
