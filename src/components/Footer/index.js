@@ -26,7 +26,7 @@ const Footer = () => {
       </div>
       <div className="text-center mt-8 text-green-400 text-xs">
         &copy; {new Date().getFullYear()} GoFutsal Center. All Rights Reserved.
-        <br/><a href="https://syahrul-arh38.github.io/">syahrul-arh38 ↗</a>
+        <br/><a href="https://syahrularh.vercel.app/">syahrul-arh38 ↗</a>
       </div>
     </footer>
   )
