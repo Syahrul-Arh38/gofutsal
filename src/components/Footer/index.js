@@ -13,7 +13,6 @@ const Footer = () => {
         <div>
           <h3 className="text-xl font-bold mb-4">Navigasi</h3>
           <ul className="text-green-200 text-sm space-y-2">
-            <li><a href="#" className="hover:text-white">Home</a></li>
             <li><a href="#about" className="hover:text-white">Tentang Kami</a></li>
             <li><a href="#gallery" className="hover:text-white">Galeri</a></li>
             <li><a href="#contact" className="hover:text-white">Kontak</a></li>
@@ -27,6 +26,7 @@ const Footer = () => {
       </div>
       <div className="text-center mt-8 text-green-400 text-xs">
         &copy; {new Date().getFullYear()} GoFutsal Center. All Rights Reserved.
+        <br/><a href="https://syahrul-arh38.github.io/">syahrul-arh38 ↗</a>
       </div>
     </footer>
   )
