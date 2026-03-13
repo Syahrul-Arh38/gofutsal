@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState('');
@@ -15,7 +16,6 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // Mengirim request ke API Google Apps Script
       const res = await fetch(process.env.NEXT_PUBLIC_GAS_API_URL, {
         method: 'POST',
         body: JSON.stringify({
@@ -28,13 +28,8 @@ export default function AdminLogin() {
       const result = await res.json();
 
       if (result.success) {
-        // 1. Simpan di localStorage (untuk proteksi sisi client/UI)
         localStorage.setItem('isAdmin', 'true');
-
-        // 2. TAMBAHKAN INI: Simpan di Cookie (agar Middleware server bisa baca)
-        // Cookie ini akan berlaku selama 24 jam (86400 detik)
         document.cookie = "isAdmin=true; path=/; max-age=86400; SameSite=Lax";
-
         router.push('/admin/dashboard');
       } else {
         setError('Username atau Password salah!');
@@ -47,47 +42,88 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Login Admin GoFutsal</h2>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4 relative overflow-hidden">
+      
+      {/* Dekorasi Background agar senada dengan landing page */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-green-50 to-transparent opacity-60"></div>
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-green-100 rounded-full blur-3xl opacity-30"></div>
+
+      <div className="max-w-md w-full relative z-10">
         
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
+        {/* Tombol Kembali ke Home */}
+        <Link 
+          href="/" 
+          className="inline-flex items-center text-sm font-bold text-gray-400 hover:text-green-600 mb-8 transition-colors group"
+        >
+          <span className="mr-2 transform group-hover:-translate-x-1 transition-transform">←</span> 
+          Kembali ke Beranda
+        </Link>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Username</label>
-            <input
-              type="text"
-              required
-              className="mt-1 block w-full text-gray-700  px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-gray-200/50 p-10 border border-gray-100">
+          <div className="text-center mb-10">
+            <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-4">
+              🛡️
+            </div>
+            <h2 className="text-3xl font-extrabold text-gray-900">Admin Login</h2>
+            <p className="text-gray-400 text-sm mt-2 font-medium">Management System GoFutsal</p>
+            <div className="w-12 h-1 bg-green-600 mx-auto mt-4 rounded-full"></div>
           </div>
+          
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-2xl mb-6 flex items-center gap-3 animate-shake">
+              <span>⚠️</span> {error}
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
-            <input
-              type="password"
-              required
-              className="mt-1 block w-full text-gray-700  px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2">Username</label>
+              <input
+                type="text"
+                required
+                placeholder="Masukkan username"
+                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 focus:ring-2 focus:ring-green-500 focus:bg-white outline-none transition-all font-medium"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors font-bold"
-          >
-            {loading ? 'Mengecek...' : 'Masuk ke Dashboard'}
-          </button>
-        </form>
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 mb-2">Password</label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••"
+                className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-700 focus:ring-2 focus:ring-green-500 focus:bg-white outline-none transition-all font-medium"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-4 rounded-2xl font-bold text-white transition-all transform active:scale-95 shadow-lg flex items-center justify-center gap-2 ${
+                loading 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-green-600 hover:bg-green-700 shadow-green-200'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Mengecek...
+                </>
+              ) : (
+                'Masuk ke Dashboard →'
+              )}
+            </button>
+          </form>
+        </div>
+        
+        <p className="text-center mt-8 text-gray-400 text-xs font-medium">
+          Protected Area &copy; {new Date().getFullYear()} GoFutsal Center
+        </p>
       </div>
     </div>
   );

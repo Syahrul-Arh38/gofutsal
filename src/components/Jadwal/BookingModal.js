@@ -51,8 +51,6 @@ export default function BookingModal({ jadwal, onClose, onSuccess }) {
         setError('Gagal memproses booking. Silakan coba lagi.');
       }
     } catch (err) {
-      // Jika masuk ke sini, berarti ada masalah jaringan fatal
-      setError('Terjadi masalah pada server. Namun cek dashboard Anda, data mungkin sudah masuk.');
     } finally {
       setLoading(false);
     }

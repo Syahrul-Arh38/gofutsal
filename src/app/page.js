@@ -3,16 +3,14 @@ import { Hero, Navbar, Jadwal, Gallery, About, Contact, Footer } from "@/compone
 
 export default function Home() {
   return (
-    <>
-    <Navbar />
-    <Hero />
     <main className="min-h-screen bg-white">
+      <Navbar />
+      <Hero />
       <About />
       <Jadwal />
       <Gallery />
       <Contact />
+      <Footer />
     </main>
-    <Footer />
-    </>
   );
 }

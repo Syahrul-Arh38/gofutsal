@@ -16,11 +16,13 @@ export const metadata = {
   description: "Lapangan Futsal Terbaik di Kota Anda",
 };
 
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true} // Tambahkan baris ini
       >
         {children}
       </body>

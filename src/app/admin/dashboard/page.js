@@ -15,7 +15,7 @@ export default function AdminDashboard() {
   const [jadwalList, setJadwalList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [newJadwal, setNewJadwal] = useState({ lapangan: 'Lapangan A', jam_mulai: '', jam_selesai: '', harga: '' });
+  const [newJadwal, setNewJadwal] = useState({ lapangan: '', jam_mulai: '', jam_selesai: '', harga: '' });
   
   const router = useRouter();
   const URL_API = process.env.NEXT_PUBLIC_GAS_API_URL;
@@ -241,14 +241,32 @@ export default function AdminDashboard() {
           <form onSubmit={handleAddJadwal} className="bg-white p-8 rounded-2xl w-full max-w-md shadow-2xl scale-in-center">
             <h3 className="text-xl font-bold mb-6 text-gray-800 border-b pb-2">Tambah Jadwal Baru</h3>
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-gray-400 uppercase">Pilih Lapangan</label>
-                <select className="w-full text-gray-700 border p-3 rounded-xl mt-1 outline-none focus:ring-2 focus:ring-green-500" 
-                  value={newJadwal.lapangan} onChange={(e) => setNewJadwal({...newJadwal, lapangan: e.target.value})}>
-                  <option>Lapangan A</option>
-                  <option>Lapangan B</option>
-                </select>
-              </div>
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Nama Lapangan / Judul
+              </label>
+              <input 
+                type="text" 
+                list="lapanganOptions" // Menghubungkan ke datalist di bawah
+                placeholder="Ketik nama lapangan atau judul..." 
+                className="w-full border p-3 rounded-xl mt-1 text-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
+                required 
+                value={newJadwal.lapangan} 
+                onChange={(e) => setNewJadwal({...newJadwal, lapangan: e.target.value})}
+              />
+              
+              {/* Daftar saran yang akan muncul saat kolom diklik atau diketik */}
+              <datalist id="lapanganOptions">
+                <option value="Lapangan A (Rumput)" />
+                <option value="Lapangan B (Vinyl)" />
+                <option value="Event Spesial" />
+                <option value="Turnamen" />
+              </datalist>
+              
+              <p className="text-[10px] text-gray-400 mt-1 italic">
+                *Kamu bisa mengetik nama baru atau memilih dari saran yang ada.
+              </p>
+            </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase">Jam Mulai</label>
